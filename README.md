@@ -1,4 +1,4 @@
-# Information Retrieval System For Boolean Queries 
+# Information Retrieval System For Phrase and Free Text Queries 
 A search system which can preprocess, build an index for a folder of text data and perform a query processing of free text and phrase queries for information retrieval from Reuters files. Python version 3.8 is used. 
 
 Index is built with: 
