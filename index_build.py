@@ -162,8 +162,8 @@ def fileHandler(dir, stops):
 
 
 def main():
-    stops = './stopwords.txt'#sys.argv[2]
-    dir = './reuters21578/' #sys.argv[1]
+    stops = sys.argv[2]
+    dir = sys.argv[1]
     fileHandler(dir,stops)
 
 
