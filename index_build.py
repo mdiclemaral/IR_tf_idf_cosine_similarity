@@ -1,7 +1,7 @@
 """
 Indexing file. Works with: python3 index_build.py folder_directory stop_words_directory
-Drops a index.pkl file to the current directory.
-Contains processor(), indxer(), fileHandler() functions.
+Drops a index.pkl, idf_index.pkl and tdf_idf_index.pkl files to the current directory.
+Contains compute_tf(), compute_idf(), processor(), indxer(), fileHandler() functions.
 
 """
 
@@ -10,9 +10,48 @@ import os
 import time
 from multiprocessing import Process, Manager
 import pickle
+import math
 import sys
-
+import string
 start_time = time.time()
+
+#'sasco': {12169: [15, 22]}
+
+"""
+Computes term frequencies for the words in the created inverted index file, calls compute_idf() function to calculate
+idf values for index terms and finally enters the tf_idf values of the words into tf_idf_index.pkl
+
+"""
+
+def compute_tf(index, num_words_in_docs):
+    idf_index = compute_idf(index, num_words_in_docs)
+    tf_idf_index = {}
+    for word in index:
+        doc_tf= {}
+        for doc in index[word]:
+           tf = len(index[word][doc])# / int(num_words_in_docs[doc])
+           tf_idf = (1 + math.log(tf, 10)) * idf_index[word]
+           doc_tf[doc] = tf_idf
+        tf_idf_index[word] = doc_tf
+    #print(tf_idf_index)
+    return tf_idf_index
+
+"""
+Computes the document frequencies for the words in the created inverted index file, enters the 
+idf weights of the words into idf_index.pkl
+
+"""
+def compute_idf(index, num_words_in_docs):
+    total_docs = max(list(num_words_in_docs.keys()))
+    idf_idx = {}
+    for word in index:
+        idf_idx[word] = math.log((total_docs/len(index[word])), 10)
+
+    idx_dump_idf = open("idf_index.pkl", "wb")
+    pickle.dump(idf_idx, idx_dump_idf)
+    idx_dump_idf.close()
+    #print(idf_idx)
+    return idf_idx
 
 """
 Reads an individual file and the stop_words file, tokenizes, cleans stop words and punctuations of the docs. 
@@ -23,7 +62,8 @@ Changes result to a list of tokenized words.
 def processor(dir, stops, input, result):
 
     stop_words = open(stops).read().split()
-    punct = '''!"#$%&'()*+, -./:;<=>?@[\]^_`{|}~''' #From string.punctuation list
+    punct = string.punctuation
+    #punct = '''!"#$%&'()*+, -./:;<=>?@[\]^_`{|}~''' #From string.punctuation list
 
     file_handler = open(dir + input, 'r', encoding='latin1').read()
     soup = BeautifulSoup(file_handler, 'html.parser')
@@ -58,10 +98,13 @@ Builds the inverted index and saves the inverted index dictionary as a file.
 
 """
 def idxer(docs):
+
+    num_words_in_docs = {}
     inverted_idx = {}
     for key in docs:
         ID = int(key)
         words = docs[key]
+        num_words_in_docs[ID] = len(words)
         for num_word in range(0, len(words)):
             word = words[num_word]
 
@@ -74,15 +117,20 @@ def idxer(docs):
                     inverted_idx[word][ID].append(num_word)
                 else:
                     inverted_idx[word][ID] = [num_word]
-    #for word in inverted_idx:
-        #inverted_idx[word].sort()
+    tf_idf_idx = compute_tf(inverted_idx, num_words_in_docs)
+
 
     #Saves the inverted index into current file.
     idx_dump = open("index.pkl", "wb")
     pickle.dump(inverted_idx, idx_dump)
     idx_dump.close()
+    idx_dump_tf = open("tdf_idf_index.pkl", "wb")
+    pickle.dump(tf_idf_idx, idx_dump_tf)
+    idx_dump_tf.close()
+
     #print(inverted_idx)
     return inverted_idx
+
 """
 
 Creates a new process for each file in reuters directory calls processor() for each file. 
@@ -122,7 +170,6 @@ def main():
 if __name__ == '__main__':
     main()
     run_time = time.time() - start_time
-    print("- Index is created in %.6f seconds -" % run_time)
-    print("- Process finished in %.6f seconds -" % (round(run_time, 5)))
+    print("- Index is created in %.6f seconds -" % (round(run_time, 5)))
     #print("- Index is created in %s seconds -" % (time.time() - start_time))
 
