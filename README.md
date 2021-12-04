@@ -1,5 +1,5 @@
 # Information Retrieval System For Boolean Queries 
-A search system which can preprocess, build an inverted index for a folder of text data and performs a boolean query processing for information retrieval from Reuters files. Python version 3.8 is used. 
+A search system which can preprocess, build an index for a folder of text data and performs a query processing of free text and phrase queries for information retrieval from Reuters files. Python version 3.8 is used. 
 
 Index is built with: 
 
