@@ -19,3 +19,7 @@ P.S:
 System may need BS4 library. If so, please run following line on terminal:
 
 python3 -m pip install -r requirements.txt
+
+
+
+Implemented by Maral Dicle Maral. November 2021
