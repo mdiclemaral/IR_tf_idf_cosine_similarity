@@ -14,6 +14,7 @@ and query_process() functions.
 import math
 import pickle
 import time
+import sys
 
 
 """
@@ -134,6 +135,7 @@ def conjunction_free (doc1, doc2):
             j += 1
         else:
             i += 1
+
     return cach
 """
 Process function for free text queries. Processes the conjunction_free() operation for the queries, computes tf_idf values 
@@ -196,7 +198,8 @@ def phrase_process(query_list, index):
         for op in range(len(word_list)-1):
             op_cach = conjunction_phrase(op_cach, word_list[word_count])
             word_count += 1
-    return list(op_cach.keys())
+    result = sorted(list(op_cach.keys()))
+    return result
 
 """
 
@@ -208,7 +211,7 @@ def query_process(query, index, tdf_idf_index, idf_index):
 
     #Finds the phrase queries.
     phrase = False
-    if query.startswith('“'):
+    if query.startswith('"'):
         phrase = True
 
     # Cleans punctuations.
