@@ -15,7 +15,6 @@ import sys
 import string
 start_time = time.time()
 
-#'sasco': {12169: [15, 22]}
 
 """
 Computes term frequencies for the words in the created inverted index file, calls compute_idf() function to calculate
@@ -29,11 +28,10 @@ def compute_tf(index, num_words_in_docs):
     for word in index:
         doc_tf= {}
         for doc in index[word]:
-           tf = len(index[word][doc])# / int(num_words_in_docs[doc])
+           tf = len(index[word][doc])
            tf_idf = (1 + math.log(tf, 10)) * idf_index[word]
            doc_tf[doc] = tf_idf
         tf_idf_index[word] = doc_tf
-    #print(tf_idf_index)
     return tf_idf_index
 
 """
@@ -50,8 +48,8 @@ def compute_idf(index, num_words_in_docs):
     idx_dump_idf = open("idf_index.pkl", "wb")
     pickle.dump(idf_idx, idx_dump_idf)
     idx_dump_idf.close()
-    #print(idf_idx)
     return idf_idx
+
 
 """
 Reads an individual file and the stop_words file, tokenizes, cleans stop words and punctuations of the docs. 
@@ -63,7 +61,6 @@ def processor(dir, stops, input, result):
 
     stop_words = open(stops).read().split()
     punct = string.punctuation
-    #punct = '''!"#$%&'()*+, -./:;<=>?@[\]^_`{|}~''' #From string.punctuation list
 
     file_handler = open(dir + input, 'r', encoding='latin1').read()
     soup = BeautifulSoup(file_handler, 'html.parser')
@@ -113,14 +110,28 @@ def idxer(docs):
                 position_dict[ID] = [num_word]
                 inverted_idx[word] = position_dict
             else:
-                if ID in inverted_idx[word]:# If docID is already added to the inverted index, continue
+                if ID in inverted_idx[word]: # If docID is already added to the inverted index, continue
                     inverted_idx[word][ID].append(num_word)
                 else:
                     inverted_idx[word][ID] = [num_word]
     tf_idf_idx = compute_tf(inverted_idx, num_words_in_docs)
 
+    # Creates an index for documents' norms and saves it to the current file.
+    vector_length_dict = {}
+    for doc in docs:
+        norm_vec = 0
+        ID = int(doc)
+        words = docs[doc]
+        for word in words:
+            word_tf_idf = tf_idf_idx[word][ID]
+            norm_vec += (word_tf_idf * word_tf_idf)
+        norm_vec = math.sqrt(norm_vec)
+        vector_length_dict[ID] = norm_vec
+    norm_dump = open("norm_index.pkl", "wb")
+    pickle.dump(vector_length_dict, norm_dump)
+    norm_dump.close()
 
-    #Saves the inverted index into current file.
+    #Saves the inverted index and tf_idf_index into current file.
     idx_dump = open("index.pkl", "wb")
     pickle.dump(inverted_idx, idx_dump)
     idx_dump.close()
@@ -128,7 +139,6 @@ def idxer(docs):
     pickle.dump(tf_idf_idx, idx_dump_tf)
     idx_dump_tf.close()
 
-    #print(inverted_idx)
     return inverted_idx
 
 """
@@ -162,8 +172,8 @@ def fileHandler(dir, stops):
 
 
 def main():
-    stops = sys.argv[2]
-    dir = sys.argv[1]
+    stops = './stopwords.txt'#sys.argv[2]
+    dir = './reuters21578/' #sys.argv[1]
     fileHandler(dir,stops)
 
 

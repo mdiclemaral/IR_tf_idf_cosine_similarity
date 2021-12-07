@@ -14,7 +14,6 @@ and query_process() functions.
 import math
 import pickle
 import time
-import sys
 
 
 """
@@ -68,21 +67,19 @@ def position_process(d1, d2):
     return(result)
 
 """
-Computes the cosine similarity for two given vectors.
+Computes the cosine similarity for two given vectors. Takes the document norm as an input 
+since the vector lengths of documents are different from query lenghts.
 
 """
-def cosine_similarity(vec1, vec2):
+def cosine_similarity(vec1, vec2, norm_vec2):
 
     dot = 0.0
     norm_vec1 = 0
-    norm_vec2 = 0
     for v in range(0, len(vec1)):
         temp_dot = (vec1[v] * vec2[v])
         dot += temp_dot
         norm_vec1 += vec1[v] * vec1[v]
-        norm_vec2 += vec2[v] * vec2[v]
     norm_vec1 = math.sqrt(norm_vec1)
-    norm_vec2 = math.sqrt(norm_vec2)
 
     cos_sim = dot / (norm_vec1 * norm_vec2)
 
@@ -103,8 +100,8 @@ def query_tdf_idf(query_list, idf_index):
             query_dict[word] += 1
 
     for word in query_list:
-        total_words = len(query_list)
-        tf = 1 + math.log(query_dict[word],10)#/total_words, 10)
+
+        tf = 1 + math.log(query_dict[word], 10)
         idf = idf_index[word]
         w = tf * idf
         query_tf_idf_list.append(w)
@@ -137,6 +134,7 @@ def conjunction_free (doc1, doc2):
             i += 1
 
     return cach
+
 """
 Process function for free text queries. Processes the conjunction_free() operation for the queries, computes tf_idf values 
 for queries with query_tdf_idf() function and computes the cosine similarities between query and the documents 
@@ -144,7 +142,7 @@ with cosine_similarity() function.
 
 """
 
-def free_text_process(query_list, tdf_idf_index, idf_index):
+def free_text_process(query_list, tdf_idf_index, idf_index, norm_index):
 
     word_list = []
 
@@ -171,11 +169,10 @@ def free_text_process(query_list, tdf_idf_index, idf_index):
 
     cos_sim = {}
     for doc in doc_tf_idf_list:
-
-        sim_score = cosine_similarity(query_tdf_idf_list, doc_tf_idf_list[doc])
+        sim_score = cosine_similarity(query_tdf_idf_list, doc_tf_idf_list[doc], norm_index[doc])
         cos_sim[doc] = sim_score
 
-    ordered_sim = sorted(cos_sim.items(), key=lambda x: x[1], reverse=True) #Sort by similarity
+    ordered_sim = sorted(cos_sim.items(), key=lambda x: x[1], reverse=True) #Sort by similarity score
 
     return ordered_sim
 
@@ -207,7 +204,7 @@ Processes queries into machine readable form and performs phrase_process() and f
 for search words entered by the user.
 
 """
-def query_process(query, index, tdf_idf_index, idf_index):
+def query_process(query, index, tdf_idf_index, idf_index, norm_index):
 
     #Finds the phrase queries.
     phrase = False
@@ -233,7 +230,7 @@ def query_process(query, index, tdf_idf_index, idf_index):
     if phrase:
         merge_result = phrase_process(query_list, index)
     else:
-        merge_result = free_text_process(query_list, tdf_idf_index, idf_index)
+        merge_result = free_text_process(query_list, tdf_idf_index, idf_index, norm_index)
 
     return merge_result
 
@@ -246,11 +243,14 @@ def main():
         tdf_idf_index = pickle.load(idx_file2)
         idx_file3 = open("idf_index.pkl", "rb")
         idf_index = pickle.load(idx_file3)
+        idx_file4 = open("norm_index.pkl", "rb")
+        norm_index = pickle.load(idx_file4)
         print('Index is succesfully loaded!')
     except(FileNotFoundError):
         index = None
         tdf_idf_index = None
         idf_index = None
+        norm_index = None
         print('INDEX IS NOT CREATED. Please first run the following command to create an index file:')
         print('python3 index_build.py folder_directory stop_words_directory')
         exit(0)
@@ -263,7 +263,7 @@ def main():
             print('Thank you for using my search engine!')
             break
         start_time = time.time()
-        result = query_process(query, index, tdf_idf_index, idf_index)
+        result = query_process(query, index, tdf_idf_index, idf_index, norm_index)
         end_time = time.time()
         run_time = end_time - start_time
         round(run_time, 3)
