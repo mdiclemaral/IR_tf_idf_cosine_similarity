@@ -1,6 +1,7 @@
 # “fourth quarter performance”
 # “James Baker”
-
+"James Baker"
+"fourth quarter performance"
 """
 
 Query Processing and Search. Works with: python3 query_process.py
@@ -114,8 +115,9 @@ Conjunction function for free text queries. Processes the conjunction operation 
 """
 def conjunction_free (doc1, doc2):
 
-    i, j = 0, 0
+    i,j = 0,0
     cach = []
+
     if len(doc1) <= len(doc2):
         doc_long = doc2
         doc_short = doc1
@@ -123,15 +125,18 @@ def conjunction_free (doc1, doc2):
         doc_long = doc1
         doc_short = doc2
 
-    while i < len(doc_long) and j < len(doc_short):
+    while  i < len(doc_long) and j < len(doc_short):
         if doc_long[i] == doc_short[j]:
-            cach.append(doc_long[i])
+            cach.append(doc_short[j])
             j += 1
             i += 1
-        elif doc_long[i] > doc_short[j]:
+        elif doc_long[i] < doc_short[j]:
+            cach.append(doc_short[j])
             j += 1
         else:
+            cach.append(doc_long[i])
             i += 1
+    cach.extend(doc_long[i:])
 
     return cach
 
@@ -163,12 +168,18 @@ def free_text_process(query_list, tdf_idf_index, idf_index, norm_index):
     for doc in op_cach:
         tf_idf_for_query_words = []
         for word in query_list:
-            tf_idf_for_query_words.append(tdf_idf_index[word][doc])
+            try:
+                tf_idf_for_query_words.append(tdf_idf_index[word][doc])
+            except(KeyError):
+                tf_idf_for_query_words.append(0)
+                #continue
         doc_tf_idf_list[doc] = (tf_idf_for_query_words)
     query_tdf_idf_list = query_tdf_idf(query_list, idf_index)
 
+
     cos_sim = {}
     for doc in doc_tf_idf_list:
+
         sim_score = cosine_similarity(query_tdf_idf_list, doc_tf_idf_list[doc], norm_index[doc])
         cos_sim[doc] = sim_score
 
